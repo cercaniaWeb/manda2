@@ -154,6 +154,7 @@ export default function App() {
         user_id: user?.id,
         customer_name: user?.user_metadata.full_name || user?.email,
         created_at: new Date().toISOString(),
+        fulfillment_status: 'pending'
       };
 
       const { data, error } = await supabase
