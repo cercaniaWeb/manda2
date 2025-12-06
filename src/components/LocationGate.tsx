@@ -48,7 +48,19 @@ export const LocationGate: React.FC<LocationGateProps> = ({ onComplete }) => {
                     const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
                     const data = await response.json();
 
-                    if (data && data.display_name) {
+                    if (data && data.address) {
+                        // Construct a cleaner address
+                        const { road, house_number, suburb, city, town, village } = data.address;
+                        const street = road || '';
+                        const number = house_number ? ` #${house_number}` : '';
+                        const area = suburb ? `, ${suburb}` : '';
+                        const locality = city || town || village || '';
+
+                        const shortAddress = `${street}${number}${area}${locality ? `, ${locality}` : ''}`;
+
+                        // Use short address if available, otherwise fallback to display_name
+                        setSelectedLocation(shortAddress.trim() || data.display_name);
+                    } else if (data && data.display_name) {
                         setSelectedLocation(data.display_name);
                     } else {
                         // Fallback to coordinates if address not found
@@ -64,8 +76,13 @@ export const LocationGate: React.FC<LocationGateProps> = ({ onComplete }) => {
             },
             (error) => {
                 console.error('Error getting location:', error);
-                alert('No pudimos obtener tu ubicación. Por favor selecciona manualmente.');
+                alert('No pudimos obtener tu ubicación exacta. Por favor verifica los permisos o ingrésala manualmente.');
                 setLocating(false);
+            },
+            {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 0
             }
         );
     };
