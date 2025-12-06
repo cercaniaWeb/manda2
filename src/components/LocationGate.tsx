@@ -40,12 +40,27 @@ export const LocationGate: React.FC<LocationGateProps> = ({ onComplete }) => {
         }
 
         navigator.geolocation.getCurrentPosition(
-            (position) => {
+            async (position) => {
                 const { latitude, longitude } = position.coords;
-                // In a real app, we would reverse geocode here.
-                // For now, we'll just show coordinates or a generic message
-                setSelectedLocation(`Ubicación actual (${latitude.toFixed(4)}, ${longitude.toFixed(4)})`);
-                setLocating(false);
+
+                try {
+                    // Fetch address from OpenStreetMap Nominatim API
+                    const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
+                    const data = await response.json();
+
+                    if (data && data.display_name) {
+                        setSelectedLocation(data.display_name);
+                    } else {
+                        // Fallback to coordinates if address not found
+                        setSelectedLocation(`Ubicación actual (${latitude.toFixed(4)}, ${longitude.toFixed(4)})`);
+                    }
+                } catch (error) {
+                    console.error('Error fetching address:', error);
+                    // Fallback to coordinates on error
+                    setSelectedLocation(`Ubicación actual (${latitude.toFixed(4)}, ${longitude.toFixed(4)})`);
+                } finally {
+                    setLocating(false);
+                }
             },
             (error) => {
                 console.error('Error getting location:', error);
